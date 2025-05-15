@@ -1,5 +1,6 @@
 import { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { User } from '../types';
+import { passkeyLogin, passkeySignup } from '../lib/passkey';
 
 type AuthContextType = {
   user: User | null;
@@ -8,6 +9,8 @@ type AuthContextType = {
   login: (email: string, password: string) => Promise<void>;
   signup: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
+  loginWithPasskey: () => Promise<void>;
+  signupWithPasskey: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -78,6 +81,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('zilt_user');
   };
 
+  const loginWithPasskey = async () => {
+    setIsLoading(true);
+    try {
+      const result = await passkeyLogin();
+      if (!result || !result.contractId) throw new Error('No contractId returned from passkey login');
+      const user: User = {
+        id: result.contractId,
+        name: 'Passkey User',
+        email: '',
+        avatar: 'https://randomuser.me/api/portraits/lego/2.jpg',
+        accountNumber: '...' + result.contractId.slice(-4),
+        phoneNumber: '',
+      };
+      setUser(user);
+      localStorage.setItem('zilt_user', JSON.stringify(user));
+    } catch (error) {
+      setIsLoading(false);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const signupWithPasskey = async () => {
+    setIsLoading(true);
+    try {
+      const result = await passkeySignup();
+      if (!result || !result.contractId) throw new Error('No contractId returned from passkey signup');
+      const name = window.prompt('Enter your username:') || '';
+      const phoneNumber = window.prompt('Enter your mobile number:') || '';
+      const user: User = {
+        id: result.contractId,
+        name,
+        email: '',
+        avatar: 'https://randomuser.me/api/portraits/lego/1.jpg',
+        accountNumber: '...' + result.contractId.slice(-4),
+        phoneNumber,
+      };
+      setUser(user);
+      localStorage.setItem('zilt_user', JSON.stringify(user));
+    } catch (error) {
+      setIsLoading(false);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -86,7 +137,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         login,
         signup,
-        logout
+        logout,
+        loginWithPasskey,
+        signupWithPasskey,
       }}
     >
       {children}

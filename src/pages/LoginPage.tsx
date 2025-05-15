@@ -1,19 +1,22 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LogIn, Mail, Lock } from 'lucide-react';
+import { LogIn, Mail, Lock, UserPlus } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import ZiltLogo from '../components/common/ZiltLogo';
 import Button from '../components/common/Button';
 import StatusBar from '../components/common/StatusBar';
+import PasskeySignupModal from '../components/auth/PasskeySignupModal';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, loginWithPasskey, signupWithPasskey } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showPasskeyModal, setShowPasskeyModal] = useState(false);
+  const [pendingPasskeyUser, setPendingPasskeyUser] = useState<any>(null);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,10 +33,46 @@ export default function LoginPage() {
     }
   };
   
+  // Handle passkey registration
+  const handlePasskeyRegister = async () => {
+    setError('');
+    setIsLoading(true);
+    try {
+      const result = await signupWithPasskey() as { contractId: string; keyIdBase64: string } | undefined;
+      if (!result || !result.contractId) throw new Error('No contractId returned from passkey signup');
+      setPendingPasskeyUser(result);
+      setShowPasskeyModal(true);
+    } catch (err) {
+      setError('Passkey registration failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Handle modal submit
+  const handlePasskeyModalSubmit = ({ username, phoneNumber }: { username: string; phoneNumber: string }) => {
+    if (!pendingPasskeyUser) return;
+    const user = {
+      id: pendingPasskeyUser.contractId,
+      name: username,
+      email: '',
+      avatar: 'https://randomuser.me/api/portraits/lego/1.jpg',
+      accountNumber: '...' + pendingPasskeyUser.contractId.slice(-4),
+      phoneNumber,
+    };
+    localStorage.setItem('zilt_user', JSON.stringify(user));
+    // Optionally, set in context if you want instant UI update
+    window.location.href = '/'; // or use navigate('/') if you want SPA navigation
+  };
+  
   return (
     <div className="min-h-screen flex flex-col justify-center p-6 bg-gray-50">
       <StatusBar />
-      
+      <PasskeySignupModal
+        open={showPasskeyModal}
+        onSubmit={handlePasskeyModalSubmit}
+        onClose={() => setShowPasskeyModal(false)}
+      />
       <motion.div 
         className="max-w-md w-full mx-auto"
         initial={{ opacity: 0, y: 20 }}
@@ -121,6 +160,41 @@ export default function LoginPage() {
               Sign In
             </Button>
           </form>
+          
+          <div className="mt-4">
+            <Button
+              type="button"
+              variant="secondary"
+              fullWidth
+              isLoading={isLoading}
+              leadingIcon={<LogIn className="w-5 h-5" />}
+              onClick={async () => {
+                setError('');
+                setIsLoading(true);
+                try {
+                  await loginWithPasskey();
+                  navigate('/');
+                } catch (err) {
+                  setError('Passkey login failed. Please try again.');
+                } finally {
+                  setIsLoading(false);
+                }
+              }}
+            >
+              Sign in with Passkey
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              fullWidth
+              isLoading={isLoading}
+              leadingIcon={<UserPlus className="w-5 h-5" />}
+              onClick={handlePasskeyRegister}
+              className="mt-2"
+            >
+              Register with Passkey
+            </Button>
+          </div>
           
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
