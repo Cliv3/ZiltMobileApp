@@ -11,7 +11,6 @@ import PasskeySignupModal from '../components/auth/PasskeySignupModal';
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login, loginWithPasskey, signupWithPasskey } = useAuth();
-  const { login, loginWithPasskey, signupWithPasskey } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
