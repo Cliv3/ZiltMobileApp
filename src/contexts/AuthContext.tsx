@@ -1,6 +1,6 @@
 import { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { User } from '../types';
-import { passkeyLogin, passkeySignup, passkeyLogout } from '../lib/passkey';
+import { passkeyLogin, passkeySignup } from '../lib/passkey';
 
 type AuthContextType = {
   user: User | null;
@@ -10,7 +10,8 @@ type AuthContextType = {
   signup: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   loginWithPasskey: () => Promise<void>;
-  signupWithPasskey: () => Promise<void>;
+  signupWithPasskey: (name: string, phoneNumber: string) => Promise<void>;
+  setUser: (user: User | null) => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -20,7 +21,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is logged in from localStorage
     const storedUser = localStorage.getItem('zilt_user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
@@ -31,8 +31,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // Mock login for demo purposes
-      // In a real app, you would make an API call here
       const mockUser: User = {
         id: '123456',
         name: 'Linda Hart',
@@ -41,7 +39,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         accountNumber: '...0890',
         phoneNumber: '+1234567890'
       };
-      
       setUser(mockUser);
       localStorage.setItem('zilt_user', JSON.stringify(mockUser));
     } catch (error) {
@@ -55,8 +52,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signup = async (name: string, email: string, password: string) => {
     setIsLoading(true);
     try {
-      // Mock signup for demo purposes
-      // In a real app, you would make an API call here
       const mockUser: User = {
         id: '123456',
         name: name,
@@ -65,7 +60,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         accountNumber: '...0890',
         phoneNumber: '+1234567890'
       };
-      
       setUser(mockUser);
       localStorage.setItem('zilt_user', JSON.stringify(mockUser));
     } catch (error) {
@@ -84,22 +78,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginWithPasskey = async () => {
     setIsLoading(true);
     try {
-      await passkeyLogin();
-      // After reload, user will be set from localStorage if needed
+      const result = await passkeyLogin();
+      if (!result?.contractId) throw new Error('Login failed');
+      
+      const user: User = {
+        id: result.contractId,
+        name: 'Passkey User',
+        email: '',
+        avatar: 'https://randomuser.me/api/portraits/lego/2.jpg',
+        accountNumber: '...' + result.contractId.slice(-4),
+        phoneNumber: '',
+      };
+      setUser(user);
+      localStorage.setItem('zilt_user', JSON.stringify(user));
     } catch (error) {
-      setIsLoading(false);
+      console.error('Passkey login error:', error);
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const signupWithPasskey = async () => {
+  const signupWithPasskey = async (name: string, phoneNumber: string) => {
     setIsLoading(true);
     try {
-      await passkeySignup();
-      // After reload, user will be set from localStorage if needed
+      const result = await passkeySignup(name);
+      if (!result?.contractId) throw new Error('Registration failed');
+      
+      const user: User = {
+        id: result.contractId,
+        name,
+        email: '',
+        avatar: 'https://randomuser.me/api/portraits/lego/1.jpg',
+        accountNumber: '...' + result.contractId.slice(-4),
+        phoneNumber,
+      };
+      setUser(user);
+      localStorage.setItem('zilt_user', JSON.stringify(user));
     } catch (error) {
-      setIsLoading(false);
+      console.error('Passkey registration error:', error);
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -114,6 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
         loginWithPasskey,
         signupWithPasskey,
+        setUser,
       }}
     >
       {children}

@@ -2,19 +2,22 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { LogIn, Mail, Lock, UserPlus } from 'lucide-react';
+import { LogIn, Mail, Lock, UserPlus } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import ZiltLogo from '../components/common/ZiltLogo';
 import Button from '../components/common/Button';
-
+import PasskeySignupModal from '../components/auth/PasskeySignupModal';
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const { login, loginWithPasskey, signupWithPasskey } = useAuth();
   const { login, loginWithPasskey, signupWithPasskey } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  
+  const [showPasskeyModal, setShowPasskeyModal] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -29,10 +32,32 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
-  
+
+  const handlePasskeyRegister = () => {
+    setError('');
+    setShowPasskeyModal(true);
+  };
+
+  const handlePasskeyModalSubmit = async ({ username, phoneNumber }: { username: string; phoneNumber: string }) => {
+    setIsLoading(true);
+    try {
+      await signupWithPasskey(username, phoneNumber);
+      navigate('/');
+    } catch (err) {
+      setError('Passkey registration failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+      setShowPasskeyModal(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col justify-center p-6 bg-gray-50">
-    
+      <PasskeySignupModal
+        open={showPasskeyModal}
+        onSubmit={handlePasskeyModalSubmit}
+        onClose={() => setShowPasskeyModal(false)}
+      />
       <motion.div 
         className="max-w-md w-full mx-auto"
         initial={{ opacity: 0, y: 20 }}
@@ -149,18 +174,7 @@ export default function LoginPage() {
               fullWidth
               isLoading={isLoading}
               leadingIcon={<UserPlus className="w-5 h-5" />}
-              onClick={async () => {
-                setError('');
-                setIsLoading(true);
-                try {
-                  await signupWithPasskey();
-                  navigate('/');
-                } catch (err) {
-                  setError('Passkey registration failed. Please try again.');
-                } finally {
-                  setIsLoading(false);
-                }
-              }}
+              onClick={handlePasskeyRegister}
               className="mt-2"
             >
               Register with Passkey

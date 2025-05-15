@@ -6,14 +6,15 @@ const CONTRACT_ID_KEY = 'snapchain:contractId';
 export function savePasskeyId(id: string) {
   localStorage.setItem(PASSKEY_ID_KEY, id);
 }
-export function getPasskeyId() {
-  return localStorage.getItem(PASSKEY_ID_KEY)
-}
 
+export function getPasskeyId() {
+  return localStorage.getItem(PASSKEY_ID_KEY);
+}
 
 export function saveContractId(id: string) {
   localStorage.setItem(CONTRACT_ID_KEY, id);
 }
+
 export function getContractId() {
   return localStorage.getItem(CONTRACT_ID_KEY);
 }
@@ -39,20 +40,27 @@ export const server = new PasskeyServer({
   launchtubeJwt: import.meta.env.VITE_LAUNCHTUBE_JWT,
 });
 
-export async function passkeySignup() {
+export async function passkeySignup(username: string) {
   try {
     const { keyIdBase64, contractId, signedTx } = await account.createWallet(
       'SnapChain',
-      'user123',
+      username
     );
-    if (!signedTx) throw new Error('built transaction missing');
+    
+    if (!signedTx) throw new Error('Transaction creation failed');
+    
     await server.send(signedTx);
     savePasskeyId(keyIdBase64);
     saveContractId(contractId);
-    window.location.reload();
+    
+    return { 
+      contractId,
+      keyIdBase64,
+      signedTx: signedTx.toXDR()
+    };
   } catch (err) {
-    console.error(err);
-    alert(`error signing up: ${JSON.stringify(err)}`);
+    console.error('Signup error:', err);
+    throw new Error('Passkey registration failed');
   }
 }
 
@@ -61,15 +69,9 @@ export async function passkeyLogin() {
     const { keyIdBase64, contractId } = await account.connectWallet();
     savePasskeyId(keyIdBase64);
     saveContractId(contractId);
-    window.location.reload();
+    return { keyIdBase64, contractId };
   } catch (err) {
-    console.error(err);
-    alert('error logging in');
+    console.error('Login error:', err);
+    throw new Error('Passkey login failed');
   }
 }
-
-export function passkeyLogout() {
-  clearPasskeyId();
-  clearContractId();
-  window.location.reload();
-} 
