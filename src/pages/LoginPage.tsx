@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { LogIn, Mail, Lock, UserPlus } from 'lucide-react';
+import { LogIn, Mail, Lock, UserPlus } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import ZiltLogo from '../components/common/ZiltLogo';
 import Button from '../components/common/Button';
@@ -9,6 +10,7 @@ import PasskeySignupModal from '../components/auth/PasskeySignupModal';
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const { login, loginWithPasskey, signupWithPasskey } = useAuth();
   const { login, loginWithPasskey, signupWithPasskey } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
