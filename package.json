@@ -10,14 +10,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.39.7",
+    "framer-motion": "^11.0.8",
     "lucide-react": "^0.344.0",
+    "passkey-kit": "^0.10.24",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.22.3",
-    "framer-motion": "^11.0.8",
     "zod": "^3.22.4",
-    "zustand": "^4.5.2",
-    "@supabase/supabase-js": "^2.39.7"
+    "zustand": "^4.5.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",

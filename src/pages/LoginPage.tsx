@@ -1,15 +1,15 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LogIn, Mail, Lock } from 'lucide-react';
+import { LogIn, Mail, Lock, UserPlus } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import ZiltLogo from '../components/common/ZiltLogo';
 import Button from '../components/common/Button';
-import StatusBar from '../components/common/StatusBar';
+
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, loginWithPasskey, signupWithPasskey } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -32,8 +32,7 @@ export default function LoginPage() {
   
   return (
     <div className="min-h-screen flex flex-col justify-center p-6 bg-gray-50">
-      <StatusBar />
-      
+    
       <motion.div 
         className="max-w-md w-full mx-auto"
         initial={{ opacity: 0, y: 20 }}
@@ -121,6 +120,52 @@ export default function LoginPage() {
               Sign In
             </Button>
           </form>
+          
+          <div className="mt-4">
+            <Button
+              type="button"
+              variant="secondary"
+              fullWidth
+              isLoading={isLoading}
+              leadingIcon={<LogIn className="w-5 h-5" />}
+              onClick={async () => {
+                setError('');
+                setIsLoading(true);
+                try {
+                  await loginWithPasskey();
+                  navigate('/');
+                } catch (err) {
+                  setError('Passkey login failed. Please try again.');
+                } finally {
+                  setIsLoading(false);
+                }
+              }}
+            >
+              Sign in with Passkey
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              fullWidth
+              isLoading={isLoading}
+              leadingIcon={<UserPlus className="w-5 h-5" />}
+              onClick={async () => {
+                setError('');
+                setIsLoading(true);
+                try {
+                  await signupWithPasskey();
+                  navigate('/');
+                } catch (err) {
+                  setError('Passkey registration failed. Please try again.');
+                } finally {
+                  setIsLoading(false);
+                }
+              }}
+              className="mt-2"
+            >
+              Register with Passkey
+            </Button>
+          </div>
           
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">

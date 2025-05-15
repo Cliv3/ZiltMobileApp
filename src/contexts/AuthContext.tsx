@@ -1,5 +1,6 @@
 import { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { User } from '../types';
+import { passkeyLogin, passkeySignup, passkeyLogout } from '../lib/passkey';
 
 type AuthContextType = {
   user: User | null;
@@ -8,6 +9,8 @@ type AuthContextType = {
   login: (email: string, password: string) => Promise<void>;
   signup: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
+  loginWithPasskey: () => Promise<void>;
+  signupWithPasskey: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -78,6 +81,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('zilt_user');
   };
 
+  const loginWithPasskey = async () => {
+    setIsLoading(true);
+    try {
+      await passkeyLogin();
+      // After reload, user will be set from localStorage if needed
+    } catch (error) {
+      setIsLoading(false);
+      throw error;
+    }
+  };
+
+  const signupWithPasskey = async () => {
+    setIsLoading(true);
+    try {
+      await passkeySignup();
+      // After reload, user will be set from localStorage if needed
+    } catch (error) {
+      setIsLoading(false);
+      throw error;
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -86,7 +111,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         login,
         signup,
-        logout
+        logout,
+        loginWithPasskey,
+        signupWithPasskey,
       }}
     >
       {children}
