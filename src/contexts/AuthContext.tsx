@@ -105,13 +105,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signupWithPasskey = async () => {
+  const signupWithPasskey = async (name: string, phoneNumber: string) => {
     setIsLoading(true);
     try {
       const result = await passkeySignup();
       if (!result || !result.contractId) throw new Error('No contractId returned from passkey signup');
-      const name = window.prompt('Enter your username:') || '';
-      const phoneNumber = window.prompt('Enter your mobile number:') || '';
       const user: User = {
         id: result.contractId,
         name,

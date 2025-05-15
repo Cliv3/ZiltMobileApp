@@ -5,7 +5,6 @@ import { LogIn, Mail, Lock, UserPlus } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import ZiltLogo from '../components/common/ZiltLogo';
 import Button from '../components/common/Button';
-import StatusBar from '../components/common/StatusBar';
 import PasskeySignupModal from '../components/auth/PasskeySignupModal';
 
 export default function LoginPage() {
@@ -13,6 +12,8 @@ export default function LoginPage() {
   const { login, loginWithPasskey, signupWithPasskey, setUser } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPasskeyModal, setShowPasskeyModal] = useState(false);
@@ -38,8 +39,7 @@ export default function LoginPage() {
     setError('');
     setIsLoading(true);
     try {
-      const result = await signupWithPasskey() as { contractId: string; keyIdBase64: string } | undefined;
-      if (!result || !result.contractId) throw new Error('No contractId returned from passkey signup');
+      const result = await signupWithPasskey();
       setPendingPasskeyUser(result);
       setShowPasskeyModal(true);
     } catch (err) {
@@ -52,6 +52,8 @@ export default function LoginPage() {
   // Handle modal submit
   const handlePasskeyModalSubmit = ({ username, phoneNumber }: { username: string; phoneNumber: string }) => {
     if (!pendingPasskeyUser) return;
+    setName(username);
+    setPhoneNumber(phoneNumber);
     const user = {
       id: pendingPasskeyUser.contractId,
       name: username,
@@ -67,7 +69,6 @@ export default function LoginPage() {
   
   return (
     <div className="min-h-screen flex flex-col justify-center p-6 bg-gray-50">
-      <StatusBar />
       <PasskeySignupModal
         open={showPasskeyModal}
         onSubmit={handlePasskeyModalSubmit}

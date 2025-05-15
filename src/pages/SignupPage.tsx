@@ -39,8 +39,6 @@ export default function SignupPage() {
   
   return (
     <div className="min-h-screen flex flex-col justify-center p-6 bg-gray-50">
-      <StatusBar />
-      
       <motion.div 
         className="max-w-md w-full mx-auto"
         initial={{ opacity: 0, y: 20 }}
