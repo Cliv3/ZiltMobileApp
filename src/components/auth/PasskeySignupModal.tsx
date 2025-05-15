@@ -21,7 +21,6 @@ export default function PasskeySignupModal({ open, onSubmit, onClose }: PasskeyS
     }
     setError('');
     onSubmit({ username, phoneNumber });
-    console.log("Registration data:", { username, phoneNumber });
     onClose();
   };
 
@@ -71,4 +70,4 @@ export default function PasskeySignupModal({ open, onSubmit, onClose }: PasskeyS
       </div>
     </div>
   );
-} 
+}

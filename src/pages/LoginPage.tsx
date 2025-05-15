@@ -9,16 +9,13 @@ import PasskeySignupModal from '../components/auth/PasskeySignupModal';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login, loginWithPasskey, signupWithPasskey, setUser } = useAuth();
+  const { login, loginWithPasskey, signupWithPasskey } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPasskeyModal, setShowPasskeyModal] = useState(false);
-  const [pendingPasskeyUser, setPendingPasskeyUser] = useState<any>(null);
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -33,40 +30,25 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
-  
-  // Handle passkey registration
-  const handlePasskeyRegister = async () => {
+
+  const handlePasskeyRegister = () => {
     setError('');
+    setShowPasskeyModal(true);
+  };
+
+  const handlePasskeyModalSubmit = async ({ username, phoneNumber }: { username: string; phoneNumber: string }) => {
     setIsLoading(true);
     try {
-      const result = await signupWithPasskey();
-      setPendingPasskeyUser(result);
-      setShowPasskeyModal(true);
+      await signupWithPasskey(username, phoneNumber);
+      navigate('/');
     } catch (err) {
       setError('Passkey registration failed. Please try again.');
     } finally {
       setIsLoading(false);
+      setShowPasskeyModal(false);
     }
   };
-  
-  // Handle modal submit
-  const handlePasskeyModalSubmit = ({ username, phoneNumber }: { username: string; phoneNumber: string }) => {
-    if (!pendingPasskeyUser) return;
-    setName(username);
-    setPhoneNumber(phoneNumber);
-    const user = {
-      id: pendingPasskeyUser.contractId,
-      name: username,
-      email: '',
-      avatar: 'https://randomuser.me/api/portraits/lego/1.jpg',
-      accountNumber: '...' + pendingPasskeyUser.contractId.slice(-4),
-      phoneNumber,
-    };
-    localStorage.setItem('zilt_user', JSON.stringify(user));
-    setUser(user);
-    navigate('/');
-  };
-  
+
   return (
     <div className="min-h-screen flex flex-col justify-center p-6 bg-gray-50">
       <PasskeySignupModal
