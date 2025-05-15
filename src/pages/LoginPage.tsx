@@ -10,7 +10,7 @@ import PasskeySignupModal from '../components/auth/PasskeySignupModal';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login, loginWithPasskey, signupWithPasskey } = useAuth();
+  const { login, loginWithPasskey, signupWithPasskey, setUser } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -61,8 +61,8 @@ export default function LoginPage() {
       phoneNumber,
     };
     localStorage.setItem('zilt_user', JSON.stringify(user));
-    // Optionally, set in context if you want instant UI update
-    window.location.href = '/'; // or use navigate('/') if you want SPA navigation
+    setUser(user);
+    navigate('/');
   };
   
   return (

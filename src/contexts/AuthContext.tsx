@@ -11,6 +11,7 @@ type AuthContextType = {
   logout: () => void;
   loginWithPasskey: () => Promise<void>;
   signupWithPasskey: () => Promise<void>;
+  setUser: (user: User | null) => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -140,6 +141,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
         loginWithPasskey,
         signupWithPasskey,
+        setUser,
       }}
     >
       {children}
