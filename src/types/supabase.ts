@@ -116,7 +116,14 @@ export interface Database {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      update_wallet_balance: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      update_updated_at_column: {
+        Args: Record<PropertyKey, never>
+        Returns: unknown
+      }
     }
     Enums: {
       [_ in never]: never

@@ -34,7 +34,7 @@ export default function WithdrawPage() {
       }
       
       const amountValue = parseFloat(amount);
-      if (amountValue + fee > balance.total) {
+      if (amountValue + fee > balance) {
         setError('Insufficient funds');
         return;
       }
@@ -66,15 +66,18 @@ export default function WithdrawPage() {
       </div>
       
       <div className="text-center mb-2 text-sm text-gray-500">
-        ACC: {user?.accountNumber}
+        ACC: {user?.wallet_address}
       </div>
       
-      {user?.avatar && (
+      {user?.avatar_url && (
         <div className="flex justify-center mb-6">
           <img 
-            src={user.avatar}
-            alt={user.name}
+            src={user.avatar_url}
+            alt={user.full_name || 'User avatar'}
             className="w-16 h-16 rounded-full object-cover"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
           />
         </div>
       )}
@@ -132,7 +135,7 @@ export default function WithdrawPage() {
           />
           <button 
             className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-            onClick={() => {/* Paste from clipboard functionality */}}
+            onClick={() => navigator.clipboard.readText().then(text => setAddress(text))}
           >
             <Copy className="w-5 h-5" />
           </button>
@@ -148,7 +151,6 @@ export default function WithdrawPage() {
               if (key === '⌫') {
                 setAmount(prev => prev.slice(0, -1));
               } else if (key === '.' && amount.includes('.')) {
-                // Prevent multiple decimal points
                 return;
               } else {
                 setAmount(prev => prev + key);

@@ -3,6 +3,22 @@ import { PasskeyKit, PasskeyServer } from 'passkey-kit';
 const PASSKEY_ID_KEY = 'snapchain:keyId';
 const CONTRACT_ID_KEY = 'snapchain:contractId';
 
+interface EnhancedPasskeyKit extends PasskeyKit {
+  createPaymentTransaction: (params: {
+    sendAsset?: string;
+    sendAmount?: string;
+    destination: string;
+    destAsset: string;
+    destAmount: string;
+    contractId: string;
+    keyId: string;
+  }) => Promise<{
+    txHash: string;
+    signedTx: any;
+    fee: string;
+  }>;
+}
+
 export function savePasskeyId(id: string) {
   localStorage.setItem(PASSKEY_ID_KEY, id);
 }
@@ -32,7 +48,7 @@ export const account = new PasskeyKit({
   networkPassphrase: import.meta.env.VITE_NETWORK_PASSPHRASE,
   walletWasmHash: import.meta.env.VITE_WALLET_WASM_HASH,
   timeoutInSeconds: 30,
-});
+}) as EnhancedPasskeyKit;
 
 export const server = new PasskeyServer({
   rpcUrl: import.meta.env.VITE_RPC_URL,
@@ -74,4 +90,26 @@ export async function passkeyLogin() {
     console.error('Login error:', err);
     throw new Error('Passkey login failed');
   }
+}
+
+async function createDepositTransaction(method: string, amount: string, contractId: string, keyId: string) {
+  return account.createPaymentTransaction({
+    sendAsset: method === 'EcoCash' ? 'XOF' : 'XAF',
+    sendAmount: amount,
+    destination: contractId,
+    destAsset: 'USDC',
+    destAmount: amount,
+    contractId,
+    keyId
+  });
+}
+
+async function createWithdrawalTransaction(amount: string, address: string, contractId: string, keyId: string) {
+  return account.createPaymentTransaction({
+    destination: address,
+    destAsset: 'USDC',
+    destAmount: amount,
+    contractId,
+    keyId
+  });
 }

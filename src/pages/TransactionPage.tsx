@@ -28,7 +28,24 @@ export default function TransactionPage() {
       }
     }
   }, [id, getTransaction]);
-  
+
+  const formatDate = (createdAt: string) => {
+    const date = new Date(createdAt);
+    return date.toLocaleDateString('en-US', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+  };
+
+  const formatTime = (createdAt: string) => {
+    const date = new Date(createdAt);
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   if (error) {
     return (
       <div className="p-6 text-center">
@@ -39,7 +56,7 @@ export default function TransactionPage() {
       </div>
     );
   }
-  
+
   if (!transaction) {
     return (
       <div className="p-6 text-center">
@@ -47,24 +64,7 @@ export default function TransactionPage() {
       </div>
     );
   }
-  
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    });
-  };
 
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-  
   return (
     <motion.div 
       className="p-6"
@@ -84,11 +84,11 @@ export default function TransactionPage() {
         <div className="flex justify-between items-center mb-6">
           <ZiltLogo size="medium" />
           <span className="text-sm text-gray-500">
-            {formatDate(transaction.date)}
+            {formatDate(transaction.created_at)}
           </span>
         </div>
         
-        <h2 className="text-lg font-semibold mb-1">Hi, {user?.name}</h2>
+        <h2 className="text-lg font-semibold mb-1">Hi, {user?.full_name}</h2>
         <p className="text-sm text-gray-500 mb-6">
           This is the receipt for your {transaction.type} transaction
         </p>
@@ -98,17 +98,17 @@ export default function TransactionPage() {
             <>
               <div className="flex justify-between">
                 <span className="text-gray-500">From</span>
-                <span className="font-medium">{user?.name}</span>
+                <span className="font-medium">{user?.full_name}</span>
               </div>
               
               <div className="flex justify-between">
                 <span className="text-gray-500">To</span>
-                <span className="font-medium">{transaction.recipientName}</span>
+                <span className="font-medium">{transaction.recipient_name}</span>
               </div>
               
               <div className="flex justify-between">
                 <span className="text-gray-500">Account Number</span>
-                <span className="font-medium">{transaction.recipientAccount}</span>
+                <span className="font-medium">{transaction.recipient_account}</span>
               </div>
             </>
           )}
@@ -117,12 +117,12 @@ export default function TransactionPage() {
             <>
               <div className="flex justify-between">
                 <span className="text-gray-500">Payment Method</span>
-                <span className="font-medium">{transaction.method}</span>
+                <span className="font-medium">{transaction.payment_method}</span>
               </div>
               
               <div className="flex justify-between">
                 <span className="text-gray-500">To Account</span>
-                <span className="font-medium">{user?.accountNumber}</span>
+                <span className="font-medium">{user?.wallet_address}</span>
               </div>
             </>
           )}
@@ -131,17 +131,17 @@ export default function TransactionPage() {
             <>
               <div className="flex justify-between">
                 <span className="text-gray-500">From Account</span>
-                <span className="font-medium">{user?.accountNumber}</span>
+                <span className="font-medium">{user?.wallet_address}</span>
               </div>
               
               <div className="flex justify-between">
                 <span className="text-gray-500">To Address</span>
-                <span className="font-medium">{transaction.recipientAccount}</span>
+                <span className="font-medium">{transaction.recipient_account}</span>
               </div>
               
               <div className="flex justify-between">
                 <span className="text-gray-500">Method</span>
-                <span className="font-medium">{transaction.method}</span>
+                <span className="font-medium">{transaction.payment_method}</span>
               </div>
             </>
           )}
@@ -165,7 +165,7 @@ export default function TransactionPage() {
           <div className="flex justify-between">
             <span className="text-gray-500">Date & Time</span>
             <span className="font-medium">
-              {formatDate(transaction.date)}, {formatTime(transaction.date)}
+              {formatDate(transaction.created_at)}, {formatTime(transaction.created_at)}
             </span>
           </div>
         </div>

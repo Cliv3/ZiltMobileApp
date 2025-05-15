@@ -1,51 +1,53 @@
 export type User = {
   id: string;
-  name: string;
-  email: string;
-  avatar?: string;
-  phoneNumber?: string;
-  accountNumber: string;
+  full_name: string | null;
+  email: string | null;
+  avatar_url?: string | null;
+  phone_number?: string | null;
+  wallet_address: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export type Transaction = {
   id: string;
+  user_id: string;
   type: 'deposit' | 'withdrawal' | 'transfer' | 'subscription';
   amount: number;
-  fee?: number;
+  fee: number | null;
   currency: string;
-  date: string;
-  status: 'completed' | 'pending' | 'failed';
-  recipientName?: string;
-  recipientAccount?: string;
-  senderName?: string;
-  senderAccount?: string;
-  method?: 'EcoCash' | 'M-PESA' | 'Crypto Wallet';
-  description?: string;
+  status: 'pending' | 'completed' | 'failed';
+  payment_method?: 'EcoCash' | 'M-PESA' | 'Crypto Wallet' | null;
+  recipient_name?: string | null;
+  recipient_account?: string | null;
+  description?: string | null;
+  created_at: string;
 };
 
 export type Balance = {
-  total: number;
+  balance: number;
   currency: string;
-  available?: number;
-  pending?: number;
 };
 
 export type PaymentMethod = 'EcoCash' | 'M-PESA' | 'Crypto Wallet';
 
+// Request types
 export type WithdrawalRequest = {
   amount: number;
   address: string;
-  method: PaymentMethod;
+  currency?: string;
 };
 
 export type SendMoneyRequest = {
   amount: number;
-  recipientId: string;
+  recipient_address: string;
   note?: string;
+  currency?: string;
 };
 
 export type DepositRequest = {
   amount: number;
   method: PaymentMethod;
-  phoneNumber?: string;
+  phone_number?: string;
+  currency?: string;
 };

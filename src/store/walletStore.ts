@@ -1,233 +1,282 @@
 import { create } from 'zustand';
-import { Balance, Transaction, PaymentMethod } from '../types';
+import { Transaction, PaymentMethod } from '../types';
+import { server, account } from '../lib/passkey';
+import { supabase } from '../lib/supabase';
 
 interface WalletState {
-  balance: Balance;
+  balance: number;
+  currency: string;
   transactions: Transaction[];
   isLoading: boolean;
   error: string | null;
-  // Actions
   fetchBalance: () => Promise<void>;
   fetchTransactions: () => Promise<void>;
-  addFunds: (amount: number, method: PaymentMethod) => Promise<void>;
+  addFunds: (amount: number, method: PaymentMethod, phone?: string) => Promise<void>;
   withdraw: (amount: number, address: string) => Promise<void>;
-  sendMoney: (amount: number, recipientId: string, note?: string) => Promise<void>;
+  sendMoney: (amount: number, recipientAddress: string, note?: string) => Promise<void>;
   getTransaction: (id: string) => Transaction | undefined;
 }
 
-// Mock data
-const mockTransactions: Transaction[] = [
-  {
-    id: '1',
-    type: 'transfer',
-    amount: 300,
-    currency: 'USDC',
-    date: '2025-04-24T10:30:00Z',
-    status: 'completed',
-    recipientName: 'Michelle R. Singh',
-    recipientAccount: '...3456',
-    description: 'Transfer'
-  },
-  {
-    id: '2',
-    type: 'deposit',
-    amount: 1200,
-    currency: 'USDC',
-    date: '2025-04-23T14:20:00Z',
-    status: 'completed',
-    method: 'EcoCash',
-    description: 'Deposit'
-  },
-  {
-    id: '3',
-    type: 'transfer',
-    amount: 700,
-    currency: 'USDC',
-    date: '2025-04-22T09:15:00Z',
-    status: 'completed',
-    recipientName: 'Mary-Anne Lithli',
-    recipientAccount: '...7890',
-    description: 'Transfer'
-  },
-  {
-    id: '4',
-    type: 'subscription',
-    amount: 20,
-    currency: 'USDC',
-    date: '2025-04-21T00:00:00Z',
-    status: 'completed',
-    recipientName: 'Dribbble',
-    description: 'Subscription'
-  },
-  {
-    id: '5',
-    type: 'subscription',
-    amount: 25,
-    currency: 'USDC',
-    date: '2025-04-20T00:00:00Z',
-    status: 'completed',
-    recipientName: 'Figma',
-    description: 'Subscription'
-  },
-  {
-    id: '6',
-    type: 'subscription',
-    amount: 25,
-    currency: 'USDC',
-    date: '2025-03-20T00:00:00Z',
-    status: 'completed',
-    recipientName: 'Figma',
-    description: 'Subscription'
-  }
-];
-
 export const useWalletStore = create<WalletState>((set, get) => ({
-  balance: { total: 3550.60, currency: 'USDC' },
-  transactions: mockTransactions,
+  balance: 0,
+  currency: 'USDC',
+  transactions: [],
   isLoading: false,
   error: null,
 
   fetchBalance: async () => {
     set({ isLoading: true, error: null });
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 800));
-      set({ balance: { total: 3550.60, currency: 'USDC' }, isLoading: false });
+      const contractId = localStorage.getItem('snapchain:contractId');
+      if (!contractId) throw new Error('Wallet not connected');
+
+      const { data: wallet } = await supabase
+        .from('wallets')
+        .select('balance, currency')
+        .eq('user_id', contractId)
+        .single();
+
+      if (!wallet) throw new Error('Wallet not found');
+      
+      set(state => ({
+        ...state,
+        balance: wallet.balance,
+        currency: wallet.currency,
+        isLoading: false 
+      }));
+
     } catch (error) {
-      set({ error: 'Failed to fetch balance', isLoading: false });
+      set(state => ({
+        ...state,
+        error: error instanceof Error ? error.message : 'Failed to fetch balance',
+        isLoading: false 
+      }));
     }
   },
 
   fetchTransactions: async () => {
     set({ isLoading: true, error: null });
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 800));
-      set({ transactions: mockTransactions, isLoading: false });
+      const contractId = localStorage.getItem('snapchain:contractId');
+      if (!contractId) throw new Error('Wallet not connected');
+
+      const { data: transactions } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', contractId)
+        .order('created_at', { ascending: false });
+
+      set(state => ({
+        ...state,
+        transactions: transactions || [],
+        isLoading: false 
+      }));
+
     } catch (error) {
-      set({ error: 'Failed to fetch transactions', isLoading: false });
+      set(state => ({
+        ...state,
+        error: error instanceof Error ? error.message : 'Failed to fetch transactions',
+        isLoading: false 
+      }));
     }
   },
 
-  addFunds: async (amount: number, method: PaymentMethod) => {
+  addFunds: async (amount: number, method: PaymentMethod, phone?: string) => {
     set({ isLoading: true, error: null });
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      const newTransaction: Transaction = {
-        id: Date.now().toString(),
-        type: 'deposit',
-        amount: amount,
-        currency: 'USDC',
-        date: new Date().toISOString(),
-        status: 'completed',
-        method: method,
-        description: 'Deposit'
-      };
-      
+      const contractId = localStorage.getItem('snapchain:contractId');
+      const keyId = localStorage.getItem('snapchain:keyId');
+      if (!contractId || !keyId) throw new Error('Wallet not connected');
+
+      const transaction = await account.createPaymentTransaction({
+        sendAsset: method === 'EcoCash' ? 'XOF' : 'XAF',
+        sendAmount: amount.toString(),
+        destination: contractId,
+        destAsset: 'USDC',
+        destAmount: amount.toString(),
+        contractId,
+        keyId
+      });
+
+      await server.send(transaction.signedTx);
+
+      const { error } = await supabase
+        .from('transactions')
+        .insert({
+          user_id: contractId,
+          type: 'deposit',
+          amount,
+          currency: 'USDC',
+          status: 'completed',
+          payment_method: method,
+          recipient_account: contractId,
+          created_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+
       set(state => ({
-        balance: { ...state.balance, total: state.balance.total + amount },
-        transactions: [newTransaction, ...state.transactions],
+        ...state,
+        balance: state.balance + amount,
+        transactions: [{
+          id: transaction.txHash,
+          user_id: contractId,
+          type: 'deposit',
+          amount,
+          fee: 0, // Explicitly set fee for deposits
+          currency: 'USDC',
+          status: 'completed',
+          payment_method: method,
+          recipient_account: contractId,
+          created_at: new Date().toISOString()
+        }, ...state.transactions],
         isLoading: false
       }));
-      
-      return;
+
     } catch (error) {
-      set({ error: 'Failed to add funds', isLoading: false });
-      throw new Error('Failed to add funds');
+      set(state => ({
+        ...state,
+        error: error instanceof Error ? error.message : 'Deposit failed',
+        isLoading: false 
+      }));
+      throw error;
     }
   },
 
   withdraw: async (amount: number, address: string) => {
     set({ isLoading: true, error: null });
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      const fee = amount * 0.002; // 0.2% fee
-      const totalDeduction = amount + fee;
-      
-      if (get().balance.total < totalDeduction) {
-        throw new Error('Insufficient funds');
+      const contractId = localStorage.getItem('snapchain:contractId');
+      const keyId = localStorage.getItem('snapchain:keyId');
+      if (!contractId || !keyId) throw new Error('Wallet not connected');
+
+      if (!/^G[A-Z0-9]{55}$/.test(address)) {
+        throw new Error('Invalid Stellar address');
       }
-      
-      const newTransaction: Transaction = {
-        id: Date.now().toString(),
-        type: 'withdrawal',
-        amount: amount,
-        fee: fee,
-        currency: 'USDC',
-        date: new Date().toISOString(),
-        status: 'completed',
-        recipientAccount: address,
-        method: 'Crypto Wallet',
-        description: 'Withdrawal'
-      };
-      
+
+      const transaction = await account.createPaymentTransaction({
+        destination: address,
+        destAmount: amount.toString(),
+        destAsset: 'USDC',
+        contractId,
+        keyId
+      });
+
+      await server.send(transaction.signedTx);
+
+      const fee = Number(transaction.fee);
+      const totalAmount = amount + fee;
+
+      const { error } = await supabase
+        .from('transactions')
+        .insert({
+          user_id: contractId,
+          type: 'withdrawal',
+          amount,
+          fee,
+          currency: 'USDC',
+          status: 'completed',
+          recipient_account: address,
+          created_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+
       set(state => ({
-        balance: { ...state.balance, total: state.balance.total - totalDeduction },
-        transactions: [newTransaction, ...state.transactions],
+        ...state,
+        balance: state.balance - totalAmount,
+        transactions: [{
+          id: transaction.txHash,
+          user_id: contractId,
+          type: 'withdrawal',
+          amount,
+          fee,
+          currency: 'USDC',
+          status: 'completed',
+          recipient_account: address,
+          created_at: new Date().toISOString()
+        }, ...state.transactions],
         isLoading: false
       }));
-      
-      return;
+
     } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : 'Failed to process withdrawal', 
+      set(state => ({
+        ...state,
+        error: error instanceof Error ? error.message : 'Withdrawal failed',
         isLoading: false 
-      });
+      }));
       throw error;
     }
   },
 
-  sendMoney: async (amount: number, recipientId: string, note?: string) => {
-    set({ isLoading: true, error: null });
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      const fee = amount * 0.001; // 0.1% fee
-      const totalDeduction = amount + fee;
-      
-      if (get().balance.total < totalDeduction) {
-        throw new Error('Insufficient funds');
-      }
-      
-      // Mock recipient data
-      const mockRecipient = {
-        name: 'Kane Terrel',
-        account: '+233 000 111 2222'
-      };
-      
-      const newTransaction: Transaction = {
-        id: Date.now().toString(),
-        type: 'transfer',
-        amount: amount,
-        fee: fee,
-        currency: 'USDC',
-        date: new Date().toISOString(),
-        status: 'completed',
-        recipientName: mockRecipient.name,
-        recipientAccount: mockRecipient.account,
-        description: note || 'Transfer'
-      };
-      
-      set(state => ({
-        balance: { ...state.balance, total: state.balance.total - totalDeduction },
-        transactions: [newTransaction, ...state.transactions],
-        isLoading: false
-      }));
-      
-      return;
-    } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : 'Failed to send money', 
-        isLoading: false 
-      });
-      throw error;
+sendMoney: async (amount: number, recipientAddress: string, note?: string) => {
+  set({ isLoading: true, error: null });
+  try {
+    const contractId = localStorage.getItem('snapchain:contractId');
+    const keyId = localStorage.getItem('snapchain:keyId');
+    if (!contractId || !keyId) throw new Error('Wallet not connected');
+
+    if (!/^G[A-Z0-9]{55}$/.test(recipientAddress)) {
+      throw new Error('Invalid recipient address');
     }
-  },
+
+    // Fixed: Changed 'address' to 'recipientAddress'
+    const transaction = await account.createPaymentTransaction({
+      destination: recipientAddress,  // Correct variable name here
+      destAmount: amount.toString(),
+      destAsset: 'USDC',
+      contractId,
+      keyId
+    });
+
+    await server.send(transaction.signedTx);
+
+    const fee = Number(transaction.fee);
+    const totalAmount = amount + fee;
+
+    const { error } = await supabase
+      .from('transactions')
+      .insert({
+        user_id: contractId,
+        type: 'transfer',
+        amount,
+        fee,
+        currency: 'USDC',
+        status: 'completed',
+        recipient_account: recipientAddress,
+        description: note,
+        created_at: new Date().toISOString()
+      });
+
+    if (error) throw error;
+
+    set(state => ({
+      ...state,
+      balance: state.balance - totalAmount,
+      transactions: [{
+        id: transaction.txHash,
+        user_id: contractId,
+        type: 'transfer',
+        amount,
+        fee,
+        currency: 'USDC',
+        status: 'completed',
+        recipient_account: recipientAddress,
+        description: note,
+        created_at: new Date().toISOString()
+      }, ...state.transactions],
+      isLoading: false
+    }));
+
+  } catch (error) {
+    set(state => ({
+      ...state,
+      error: error instanceof Error ? error.message : 'Transfer failed',
+      isLoading: false 
+    }));
+    throw error;
+  }
+},
 
   getTransaction: (id: string) => {
     return get().transactions.find(tx => tx.id === id);

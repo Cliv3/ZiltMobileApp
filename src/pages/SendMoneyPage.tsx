@@ -70,7 +70,7 @@ export default function SendMoneyPage() {
         return;
       }
       
-      if (parseFloat(amount) + fee > balance.total) {
+      if (parseFloat(amount) + fee > balance) {
         setError('Insufficient funds');
         return;
       }
@@ -107,24 +107,25 @@ export default function SendMoneyPage() {
     setRecipientPhone(recipient.phoneNumber);
   };
   
-  const handleSendMoney = async () => {
-    try {
-      if (!amount || !recipientId) {
-        setError('Invalid transaction details');
-        return;
-      }
-      
-      const amountValue = parseFloat(amount);
-      await sendMoney(amountValue, recipientId, note);
-      navigate('/');
-    } catch (error) {
-      if (error instanceof Error) {
-        setError(error.message);
-      } else {
-        setError('Failed to send money. Please try again.');
-      }
+  // Change handleSendMoney
+const handleSendMoney = async () => {
+  try {
+    if (!amount || !recipientPhone) {
+      setError('Invalid transaction details');
+      return;
     }
-  };
+    
+    const amountValue = parseFloat(amount);
+    await sendMoney(amountValue, recipientPhone, note);
+    navigate('/');
+  } catch (error) {
+    if (error instanceof Error) {
+      setError(error.message);
+    } else {
+      setError('Failed to send money. Please try again.');
+    }
+  }
+};
 
   return (
     <motion.div 

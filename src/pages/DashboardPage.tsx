@@ -27,15 +27,17 @@ export default function DashboardPage() {
     >
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          {user?.avatar && (
+          {user?.avatar_url && (
             <img 
-              src={user.avatar} 
-              alt={user.name} 
+              src={user.avatar_url} 
+              alt={user.full_name || 'User avatar'} 
               className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm"
             />
           )}
           <div>
-            <h1 className="text-lg font-semibold">Welcome back, {user?.name.split(' ')[0]}</h1>
+            <h1 className="text-lg font-semibold">
+              Welcome back, {user?.full_name?.split(' ')[0] || 'User'}
+            </h1>
           </div>
         </div>
         
@@ -53,7 +55,8 @@ export default function DashboardPage() {
       
       <BalanceCard 
         balance={balance} 
-        accountNumber={user?.accountNumber || ''}
+        currency="USDC"
+        walletAddress={user?.wallet_address || ''}
       />
       
       <ActionButtons />
