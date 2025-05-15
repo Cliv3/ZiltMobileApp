@@ -1,14 +1,16 @@
 import { useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { LogOut } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useWalletStore } from '../store/walletStore';
 import BalanceCard from '../components/wallet/BalanceCard';
 import ActionButtons from '../components/wallet/ActionButtons';
 import TransactionsList from '../components/wallet/TransactionsList';
 import NotificationBell from '../components/common/NotificationBell';
+import Button from '../components/common/Button';
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { balance, transactions, fetchBalance, fetchTransactions } = useWalletStore();
   
   useEffect(() => {
@@ -37,7 +39,16 @@ export default function DashboardPage() {
           </div>
         </div>
         
-        <NotificationBell />
+        <div className="flex items-center gap-2">
+          <NotificationBell />
+          <Button
+            onClick={logout}
+            className="hover:bg-red-50 text-red-600 hover:text-red-700"
+            aria-label="Logout"
+          >
+            <LogOut className="w-5 h-5" />
+          </Button>
+        </div>
       </div>
       
       <BalanceCard 
