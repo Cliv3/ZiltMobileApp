@@ -22,12 +22,12 @@ export default function PaymentMethodSelector({
     {
       id: 'EcoCash',
       label: 'EcoCash',
-      logo: 'https://play-lh.googleusercontent.com/vbZoQ_FhjkyDEsLjx4Il-L_DFkpJ8-aq0hbIyUr0jWBEQRNYbQ2P2Iu2qfmAUTGJYTY'
+      logo: 'https://upload.wikimedia.org/wikipedia/commons/5/54/EcoCash.png'
     },
     {
       id: 'M-PESA',
       label: 'M-PESA',
-      logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/M-PESA_LOGO-01.svg/2560px-M-PESA_LOGO-01.svg.png'
+      logo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSMPGxi5WoE0uLWHpT-C-km3qDaueN7WpTVlQ&s'
     },
     {
       id: 'Crypto Wallet',

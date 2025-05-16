@@ -92,7 +92,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 800));
-      set({ balance: { total: 3550.60, currency: 'USDC' }, isLoading: false });
+      set({ balance: { total: 0, currency: 'USDC' }, isLoading: false });
     } catch (error) {
       set({ error: 'Failed to fetch balance', isLoading: false });
     }
