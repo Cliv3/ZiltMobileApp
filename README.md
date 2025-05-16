@@ -30,6 +30,7 @@ Stellar’s ecosystem tools—SDKs, testnet, launchtube, and developer documenta
 > 🔗 GitHub Repo: [https://github.com/Cliv3/ZiltMobileApp](https://github.com/Cliv3/ZiltMobileApp)
 > 🌐 Deployed Frontend: [https://ziltapp.netlify.app](https://ziltapp.netlify.app)
 
+![diagram](./diagram.jpeg)
 ---
 
 ## 🛠️ Technologies Used
