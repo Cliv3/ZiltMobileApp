@@ -93,7 +93,7 @@ Zilt is architected as a hybrid fiat–crypto wallet system. Fiat onramps (e.g.,
 - ✅ Wallet smart contracts deployed to Stellar testnet
 - ✅ Passkey integration live
 - ✅ USDC bridge operational for testnet transactions
-- ✅ Demo available at [https://ziltapp.netlify.app](https://ziltapp.netlify.app)
+- ✅ Demo available at [https://ziltapp.netlify.app](https://ziltapp.netlify.app) no longer working
 ---
 
 ## 📄 License
